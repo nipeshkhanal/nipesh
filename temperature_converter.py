@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# Conversion functions
 def celsius_to_fahrenheit(c):
     return (c * 9/5) + 32
 
@@ -20,16 +21,20 @@ def kelvin_to_celsius(k):
 def kelvin_to_fahrenheit(k):
     return (k - 273.15) * 9/5 + 32
 
+# Home route
 @app.route('/')
 def home():
     return "Welcome to the Temperature Converter API!"
 
+# Convert route
 @app.route('/convert', methods=['GET'])
 def convert():
+    # Get parameters from the request
     from_unit = request.args.get('from')
     to_unit = request.args.get('to')
     temp = float(request.args.get('temp'))
 
+    # Perform conversion based on user input
     if from_unit == 'c' and to_unit == 'f':
         result = celsius_to_fahrenheit(temp)
     elif from_unit == 'c' and to_unit == 'k':
@@ -45,6 +50,7 @@ def convert():
     else:
         return jsonify({"error": "Invalid conversion parameters."}), 400
 
+    # Return the result as JSON
     return jsonify({
         "from": from_unit,
         "to": to_unit,
@@ -52,7 +58,9 @@ def convert():
         "result": round(result, 2)
     })
 
+# Run the Flask app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=5000)
+
 
    
