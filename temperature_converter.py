@@ -1,8 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
-# Conversion functions
 def celsius_to_fahrenheit(c):
     return (c * 9/5) + 32
 
@@ -21,20 +20,50 @@ def kelvin_to_celsius(k):
 def kelvin_to_fahrenheit(k):
     return (k - 273.15) * 9/5 + 32
 
-# Home route
 @app.route('/')
 def home():
-    return "Welcome to the Temperature Converter API!"
+    return render_template_string('''
+        <h1>Temperature Converter</h1>
+        <form method="post" action="/convert">
+            <label for="temp">Enter temperature:</label>
+            <input type="number" name="temp" id="temp" required>
+            <br>
+            <label for="from_unit">From:</label>
+            <select name="from_unit" id="from_unit" required>
+                <option value="c">Celsius</option>
+                <option value="f">Fahrenheit</option>
+                <option value="k">Kelvin</option>
+            </select>
+            <br>
+            <label for="to_unit">To:</label>
+            <select name="to_unit" id="to_unit" required>
+                <option value="c">Celsius</option>
+                <option value="f">Fahrenheit</option>
+                <option value="k">Kelvin</option>
+            </select>
+            <br><br>
+            <input type="submit" value="Convert">
+        </form>
+        {% if result %}
+            <h2>Result: {{ result }}</h2>
+        {% endif %}
+    ''')
 
-# Convert route
-@app.route('/convert', methods=['GET'])
+@app.route('/convert', methods=['POST'])
 def convert():
-    # Get parameters from the request
-    from_unit = request.args.get('from')
-    to_unit = request.args.get('to')
-    temp = float(request.args.get('temp'))
+    from_unit = request.form['from_unit']
+    to_unit = request.form['to_unit']
+    temp = request.form['temp']
 
-    # Perform conversion based on user input
+    try:
+        temp = float(temp)
+    except ValueError:
+        return render_template_string('''
+            <h1>Temperature Converter</h1>
+            <p>Error: Invalid input. Please enter a valid number.</p>
+            <a href="/">Go back</a>
+        ''')
+
     if from_unit == 'c' and to_unit == 'f':
         result = celsius_to_fahrenheit(temp)
     elif from_unit == 'c' and to_unit == 'k':
@@ -48,19 +77,36 @@ def convert():
     elif from_unit == 'k' and to_unit == 'f':
         result = kelvin_to_fahrenheit(temp)
     else:
-        return jsonify({"error": "Invalid conversion parameters."}), 400
+        return render_template_string('''
+            <h1>Temperature Converter</h1>
+            <p>Error: Invalid conversion parameters.</p>
+            <a href="/">Go back</a>
+        ''')
 
-    # Return the result as JSON
-    return jsonify({
-        "from": from_unit,
-        "to": to_unit,
-        "input": temp,
-        "result": round(result, 2)
-    })
+    return render_template_string('''
+        <h1>Temperature Converter</h1>
+        <form method="post" action="/convert">
+            <label for="temp">Enter temperature:</label>
+            <input type="number" name="temp" id="temp" required>
+            <br>
+            <label for="from_unit">From:</label>
+            <select name="from_unit" id="from_unit" required>
+                <option value="c" {% if from_unit == 'c' %}selected{% endif %}>Celsius</option>
+                <option value="f" {% if from_unit == 'f' %}selected{% endif %}>Fahrenheit</option>
+                <option value="k" {% if from_unit == 'k' %}selected{% endif %}>Kelvin</option>
+            </select>
+            <br>
+            <label for="to_unit">To:</label>
+            <select name="to_unit" id="to_unit" required>
+                <option value="c" {% if to_unit == 'c' %}selected{% endif %}>Celsius</option>
+                <option value="f" {% if to_unit == 'f' %}selected{% endif %}>Fahrenheit</option>
+                <option value="k" {% if to_unit == 'k' %}selected{% endif %}>Kelvin</option>
+            </select>
+            <br><br>
+            <input type="submit" value="Convert">
+        </form>
+        <h2>Result: {{ result }} {{ to_unit|capitalize }}</h2>
+    ''', result=round(result, 2), from_unit=from_unit, to_unit=to_unit)
 
-# Run the Flask app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-
-
-   
