@@ -1,3 +1,6 @@
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
 
 def celsius_to_fahrenheit(c):
     return (c * 9/5) + 32
@@ -17,33 +20,39 @@ def kelvin_to_celsius(k):
 def kelvin_to_fahrenheit(k):
     return (k - 273.15) * 9/5 + 32
 
-def main():
-    print("Temperature Converter")
-    print("Options:")
-    print("1. Celsius to Fahrenheit")
-    print("2. Celsius to Kelvin")
-    print("3. Fahrenheit to Celsius")
-    print("4. Fahrenheit to Kelvin")
-    print("5. Kelvin to Celsius")
-    print("6. Kelvin to Fahrenheit")
+@app.route('/')
+def home():
+    return "Welcome to the Temperature Converter API!"
 
-    choice = int(input("Enter your choice (1-6): "))
-    temp = float(input("Enter the temperature to convert: "))
+@app.route('/convert', methods=['GET'])
+def convert():
+    from_unit = request.args.get('from')
+    to_unit = request.args.get('to')
+    temp = float(request.args.get('temp'))
 
-    if choice == 1:
-        print(f"{temp}°C = {celsius_to_fahrenheit(temp):.2f}°F")
-    elif choice == 2:
-        print(f"{temp}°C = {celsius_to_kelvin(temp):.2f}K")
-    elif choice == 3:
-        print(f"{temp}°F = {fahrenheit_to_celsius(temp):.2f}°C")
-    elif choice == 4:
-        print(f"{temp}°F = {fahrenheit_to_kelvin(temp):.2f}K")
-    elif choice == 5:
-        print(f"{temp}K = {kelvin_to_celsius(temp):.2f}°C")
-    elif choice == 6:
-        print(f"{temp}K = {kelvin_to_fahrenheit(temp):.2f}°F")
+    if from_unit == 'c' and to_unit == 'f':
+        result = celsius_to_fahrenheit(temp)
+    elif from_unit == 'c' and to_unit == 'k':
+        result = celsius_to_kelvin(temp)
+    elif from_unit == 'f' and to_unit == 'c':
+        result = fahrenheit_to_celsius(temp)
+    elif from_unit == 'f' and to_unit == 'k':
+        result = fahrenheit_to_kelvin(temp)
+    elif from_unit == 'k' and to_unit == 'c':
+        result = kelvin_to_celsius(temp)
+    elif from_unit == 'k' and to_unit == 'f':
+        result = kelvin_to_fahrenheit(temp)
     else:
-        print("Invalid choice.")
+        return jsonify({"error": "Invalid conversion parameters."}), 400
 
-if __name__ == "__main__":
-    main()
+    return jsonify({
+        "from": from_unit,
+        "to": to_unit,
+        "input": temp,
+        "result": round(result, 2)
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
+
+   
